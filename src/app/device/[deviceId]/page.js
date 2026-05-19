@@ -1,14 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
-const LiveMap = dynamic(() => import('@/components/maps/LiveMap'), {
-  ssr: false,
-});
 
 export default function DeviceViewerPage() {
   const params = useParams();
@@ -53,7 +48,10 @@ export default function DeviceViewerPage() {
     };
   }, [deviceId]);
 
-  const liveStatus = getLiveStatus(device?.lastSeenAt || device?.updatedAt);
+  const mapsLink =
+    device?.lat && device?.lng
+      ? 'https://www.google.com/maps?q=' + device.lat + ',' + device.lng
+      : '';
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-12">
@@ -88,25 +86,16 @@ export default function DeviceViewerPage() {
           {device && (
             <>
               <div className="mt-6 grid gap-4 md:grid-cols-4">
-                <StatusCard
-                  label="Live Status"
-                  value={liveStatus.text}
-                  active={liveStatus.type === 'success'}
-                  warning={liveStatus.type === 'warning'}
-                  danger={liveStatus.type === 'danger'}
-                />
-
-                <StatusCard
+                <Info label="Status" value={device.status || 'unknown'} />
+                <Info
                   label="Battery"
                   value={
                     device.batteryLevel !== null && device.batteryLevel !== undefined
                       ? device.batteryLevel + '%'
                       : 'Not available'
                   }
-                  active={true}
                 />
-
-                <StatusCard
+                <Info
                   label="Charging"
                   value={
                     device.charging === null || device.charging === undefined
@@ -115,14 +104,8 @@ export default function DeviceViewerPage() {
                       ? 'Yes'
                       : 'No'
                   }
-                  active={device.charging === true}
                 />
-
-                <StatusCard
-                  label="Source"
-                  value={device.source || 'device'}
-                  active={true}
-                />
+                <Info label="Source" value={device.source || 'device'} />
               </div>
 
               <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950 p-5">
@@ -130,13 +113,7 @@ export default function DeviceViewerPage() {
                   Latest Device Location
                 </h2>
 
-                <LiveMap
-                  lat={device.lat}
-                  lng={device.lng}
-                  title={device.vehicleName || 'GPS Device'}
-                />
-
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   <Info label="Latitude" value={device.lat} />
                   <Info label="Longitude" value={device.lng} />
                   <Info
@@ -153,17 +130,25 @@ export default function DeviceViewerPage() {
                   />
                   <Info
                     label="Speed"
-                    value={device.speed ? device.speed + ' m/s' : 'Not available'}
+                    value={
+                      device.speed !== null && device.speed !== undefined
+                        ? device.speed + ' m/s'
+                        : 'Not available'
+                    }
                   />
                   <Info
                     label="Heading"
-                    value={device.heading || 'Not available'}
+                    value={
+                      device.heading !== null && device.heading !== undefined
+                        ? device.heading
+                        : 'Not available'
+                    }
                   />
                 </div>
 
-                {device.lat && device.lng && (
+                {mapsLink && (
                   <a
-                    href={'https://www.google.com/maps?q=' + device.lat + ',' + device.lng}
+                    href={mapsLink}
                     target="_blank"
                     className="mt-6 inline-block rounded-xl bg-emerald-500 px-5 py-3 font-bold text-slate-950 hover:bg-emerald-400"
                   >
@@ -179,66 +164,13 @@ export default function DeviceViewerPage() {
   );
 }
 
-function getLiveStatus(lastSeenAt) {
-  if (!lastSeenAt) {
-    return {
-      text: 'Unknown',
-      type: 'warning',
-    };
-  }
-
-  const diffMs = Date.now() - new Date(lastSeenAt).getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-
-  if (diffMinutes < 2) {
-    return {
-      text: 'Fresh',
-      type: 'success',
-    };
-  }
-
-  if (diffMinutes < 10) {
-    return {
-      text: 'Stale - ' + diffMinutes + ' min ago',
-      type: 'warning',
-    };
-  }
-
-  return {
-    text: 'Offline - ' + diffMinutes + ' min ago',
-    type: 'danger',
-  };
-}
-
-function StatusCard({ label, value, active, warning, danger }) {
-  let colorClass = 'text-red-300';
-  let boxClass = 'rounded-2xl border border-slate-800 bg-slate-950 p-5';
-
-  if (danger) {
-    colorClass = 'text-red-300';
-    boxClass = 'rounded-2xl border border-red-500/40 bg-red-500/10 p-5';
-  } else if (warning) {
-    colorClass = 'text-yellow-300';
-    boxClass = 'rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-5';
-  } else if (active) {
-    colorClass = 'text-emerald-300';
-  }
-
-  return (
-    <div className={boxClass}>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className={'mt-2 break-all text-xl font-bold ' + colorClass}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function Info({ label, value }) {
   return (
-    <div className="rounded-xl bg-slate-900 p-4">
+    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
       <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 break-all font-semibold text-white">{value}</p>
+      <p className="mt-1 break-all font-semibold text-white">
+        {value || 'Not available'}
+      </p>
     </div>
   );
 }
