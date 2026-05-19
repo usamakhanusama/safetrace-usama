@@ -1,4 +1,4 @@
-﻿import admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 function getServiceAccount() {
   const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
@@ -7,7 +7,8 @@ function getServiceAccount() {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_BASE64 is missing.');
   }
 
-  const jsonText = Buffer.from(base64, 'base64').toString('utf8');
+  const cleanBase64 = base64.trim();
+  const jsonText = Buffer.from(cleanBase64, 'base64').toString('utf8').replace(/^\uFEFF/, '');
   const raw = JSON.parse(jsonText);
 
   if (!raw.project_id || !raw.client_email || !raw.private_key) {
@@ -21,12 +22,14 @@ function getServiceAccount() {
   };
 }
 
-if (!admin.apps.length) {
-  const serviceAccount = getServiceAccount();
+export function getAdminDb() {
+  if (!admin.apps.length) {
+    const serviceAccount = getServiceAccount();
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  }
+
+  return admin.firestore();
 }
-
-export const adminDb = admin.firestore();

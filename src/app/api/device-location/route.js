@@ -1,5 +1,5 @@
-﻿import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { NextResponse } from 'next/server';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 
 export async function POST(request) {
   try {
@@ -58,6 +58,8 @@ export async function POST(request) {
       updatedAt: now,
       lastSeenAt: now,
     };
+
+    const adminDb = getAdminDb();
 
     await adminDb.collection('deviceLocations').doc(deviceId).set(
       {
