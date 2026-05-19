@@ -1,6 +1,6 @@
-﻿import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+﻿import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,9 +11,29 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+function isFirebaseConfigReady() {
+  return Boolean(
+    firebaseConfig.apiKey &&
+      firebaseConfig.authDomain &&
+      firebaseConfig.projectId &&
+      firebaseConfig.storageBucket &&
+      firebaseConfig.messagingSenderId &&
+      firebaseConfig.appId
+  );
+}
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+function createFirebaseApp() {
+  if (!isFirebaseConfigReady()) {
+    return null;
+  }
 
-export default app;
+  if (getApps().length > 0) {
+    return getApp();
+  }
+
+  return initializeApp(firebaseConfig);
+}
+
+export const app = createFirebaseApp();
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
