@@ -12,6 +12,7 @@ export default function DeviceViewerPage() {
   const [device, setDevice] = useState(null);
   const [message, setMessage] = useState('Connecting to GPS device...');
   const [loading, setLoading] = useState(true);
+  const [copyMessage, setCopyMessage] = useState('');
 
   useEffect(() => {
     if (!deviceId || !db) return;
@@ -53,6 +54,30 @@ export default function DeviceViewerPage() {
       ? 'https://www.google.com/maps?q=' + device.lat + ',' + device.lng
       : '';
 
+  const shareLink =
+    typeof window !== 'undefined'
+      ? window.location.origin + '/device/' + deviceId
+      : '';
+
+  const whatsappText = encodeURIComponent(
+    'My motorcycle GPS tracking link: ' + shareLink
+  );
+
+  const whatsappLink = 'https://wa.me/?text=' + whatsappText;
+
+  async function copyTrackingLink() {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setCopyMessage('Tracking link copied.');
+    } catch {
+      setCopyMessage('Copy failed. Please copy from browser address bar.');
+    }
+  }
+
+  function refreshPage() {
+    window.location.reload();
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-12">
       <section className="mx-auto max-w-5xl">
@@ -67,6 +92,55 @@ export default function DeviceViewerPage() {
         <p className="mt-3 max-w-2xl text-slate-400">
           Device ID: {deviceId}
         </p>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {mapsLink && (
+            <a
+              href={mapsLink}
+              target="_blank"
+              className="rounded-xl bg-emerald-500 px-5 py-3 text-center font-bold text-slate-950 hover:bg-emerald-400"
+            >
+              Open in Google Maps
+            </a>
+          )}
+
+          <button
+            onClick={copyTrackingLink}
+            className="rounded-xl border border-emerald-500/40 px-5 py-3 font-bold text-emerald-300 hover:bg-emerald-500/10"
+          >
+            Copy Tracking Link
+          </button>
+
+          <a
+            href={whatsappLink}
+            target="_blank"
+            className="rounded-xl border border-green-500/40 px-5 py-3 text-center font-bold text-green-300 hover:bg-green-500/10"
+          >
+            Share WhatsApp
+          </a>
+
+          <button
+            onClick={refreshPage}
+            className="rounded-xl border border-slate-700 px-5 py-3 font-bold text-white hover:border-emerald-400"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {copyMessage && (
+          <p className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+            {copyMessage}
+          </p>
+        )}
+
+        <div className="mt-8 rounded-3xl border border-red-500/30 bg-red-500/10 p-5">
+          <h2 className="text-xl font-bold text-red-200">
+            Anti-Theft Use
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-red-100">
+            If the motorcycle is stolen, copy this tracking link and share it with trusted people or law enforcement. Use this only for your own vehicle or with proper permission.
+          </p>
+        </div>
 
         <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
           <p className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-emerald-300">
@@ -147,13 +221,22 @@ export default function DeviceViewerPage() {
                 </div>
 
                 {mapsLink && (
-                  <a
-                    href={mapsLink}
-                    target="_blank"
-                    className="mt-6 inline-block rounded-xl bg-emerald-500 px-5 py-3 font-bold text-slate-950 hover:bg-emerald-400"
-                  >
-                    Open in Google Maps
-                  </a>
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <a
+                      href={mapsLink}
+                      target="_blank"
+                      className="rounded-xl bg-emerald-500 px-5 py-3 text-center font-bold text-slate-950 hover:bg-emerald-400"
+                    >
+                      Open Location
+                    </a>
+
+                    <button
+                      onClick={copyTrackingLink}
+                      className="rounded-xl border border-emerald-500/40 px-5 py-3 font-bold text-emerald-300 hover:bg-emerald-500/10"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
                 )}
               </div>
             </>
