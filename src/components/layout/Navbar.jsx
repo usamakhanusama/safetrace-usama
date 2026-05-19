@@ -26,6 +26,7 @@ export default function Navbar() {
               <Link href="/dashboard" className="hover:text-emerald-400">Dashboard</Link>
               <Link href="/contacts" className="hover:text-emerald-400">Contacts</Link>
               <Link href="/profile" className="hover:text-emerald-400">Profile</Link>
+<Link href="/device/bike-001" className="hover:text-emerald-400">Bike GPS</Link>
             </>
           )}
           {isAdmin && (
